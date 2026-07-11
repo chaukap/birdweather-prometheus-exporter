@@ -1,0 +1,6 @@
+.git
+*.md
+examples/
+Dockerfile
+.dockerignore
+.gitignore

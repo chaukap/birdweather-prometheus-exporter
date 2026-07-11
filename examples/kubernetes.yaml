@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: birdweather-exporter
+type: Opaque
+stringData:
+  station-token: "REPLACE_WITH_YOUR_STATION_TOKEN"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: birdweather-exporter
+  labels:
+    app: birdweather-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: birdweather-exporter
+  template:
+    metadata:
+      labels:
+        app: birdweather-exporter
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9743"
+    spec:
+      containers:
+        - name: exporter
+          image: birdweather-prometheus-exporter:latest
+          args:
+            - --query-interval=5m
+            - --period=day
+          env:
+            - name: BIRDWEATHER_STATION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: birdweather-exporter
+                  key: station-token
+          ports:
+            - name: metrics
+              containerPort: 9743
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: birdweather-exporter
+  labels:
+    app: birdweather-exporter
+spec:
+  selector:
+    app: birdweather-exporter
+  ports:
+    - name: metrics
+      port: 9743
+      targetPort: metrics
