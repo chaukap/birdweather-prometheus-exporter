@@ -27,7 +27,8 @@ spec:
     spec:
       containers:
         - name: exporter
-          image: birdweather-prometheus-exporter:latest
+          # Pin to a released version tag, e.g. :1.0.0
+          image: ghcr.io/chaukap/birdweather-prometheus-exporter:latest
           args:
             - --query-interval=5m
             - --period=day

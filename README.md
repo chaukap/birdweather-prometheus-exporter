@@ -46,19 +46,27 @@ your station page at `app.birdweather.com`.
 
 ### Docker
 
-```sh
-docker build -t birdweather-prometheus-exporter .
+Released versions are published to GitHub Container Registry as multi-arch
+images (linux/amd64 and linux/arm64):
 
+```sh
 docker run -d --name birdweather-exporter \
   -e BIRDWEATHER_STATION_TOKEN=your-station-token \
   -e BIRDWEATHER_QUERY_INTERVAL=5m \
   -p 9743:9743 \
-  birdweather-prometheus-exporter
+  ghcr.io/chaukap/birdweather-prometheus-exporter:latest
 ```
 
-Then check `http://localhost:9743/metrics`.
+Then check `http://localhost:9743/metrics`. Pin a version tag (e.g. `:1.0.0`)
+in anything long-lived.
 
-The image is a multi-arch-friendly distroless build; use
+To build locally instead:
+
+```sh
+docker build -t birdweather-prometheus-exporter .
+```
+
+The image is a distroless build; use
 `docker buildx build --platform linux/amd64,linux/arm64 ...` if you need an
 arm64 image (e.g. for a Raspberry Pi running Home Assistant OS).
 
@@ -115,3 +123,28 @@ birdweather_query_success == 0
 
 - `/metrics` — Prometheus metrics
 - `/healthz` — liveness/readiness probe, always returns `200 ok`
+
+## CI/CD
+
+Three GitHub Actions workflows keep the pipeline honest:
+
+- **CI** (`ci.yml`) — on every pull request to `main` (and pushes to `main`):
+  runs `go vet` and the test suite with the race detector, verifies the Docker
+  image builds for both amd64 and arm64, and runs Trivy scans of the
+  repository (dependencies, secrets, misconfigurations) and the built image.
+  Fixable HIGH/CRITICAL findings fail the check, so they can't merge.
+- **Release** (`release.yml`) — when a GitHub release is published: re-runs
+  tests, Trivy-scans the image *before* anything is pushed, then builds and
+  pushes the multi-arch image to GHCR tagged with the release version
+  (a `v1.2.3` release produces `1.2.3`, `1.2`, `v1.2.3` and `latest`).
+  Nothing is ever uploaded from pull requests or branch pushes.
+- **Scheduled scan** (`scheduled-scan.yml`) — weekly (and on demand via
+  workflow dispatch): Trivy-scans the repository and the latest published
+  image, and reports findings to the repository's Security tab. This catches
+  CVEs discovered *after* an image was released.
+
+To cut a release: create a GitHub release with a semver tag like `v1.0.0`.
+The workflow publishes `ghcr.io/chaukap/birdweather-prometheus-exporter`
+automatically using the built-in `GITHUB_TOKEN` — no registry credentials to
+manage. After the first release, make the package public once in the GHCR
+package settings (GitHub creates new packages as private by default).
