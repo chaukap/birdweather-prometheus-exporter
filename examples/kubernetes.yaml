@@ -25,6 +25,12 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9743"
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: exporter
           # Pin to a released version tag, e.g. :1.0.0
@@ -58,6 +64,8 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
 ---
 apiVersion: v1
 kind: Service
