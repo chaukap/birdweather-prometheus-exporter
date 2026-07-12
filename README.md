@@ -96,6 +96,24 @@ go build .
 ./birdweather-prometheus-exporter --station-token your-station-token
 ```
 
+## Grafana dashboard
+
+A ready-made dashboard lives in
+[`grafana/birdweather-dashboard.json`](grafana/birdweather-dashboard.json):
+species leaderboard, most recent visitors, PUC status and link history,
+activity over time, and detection-confidence breakdown.
+
+Import it in Grafana via **Dashboards → New → Import**, paste or upload the
+JSON, and pick your Prometheus data source when prompted. With the Grafana
+Home Assistant add-on you can instead drop the file into the add-on's
+provisioning directory (`/addon_configs/<hash>_grafana/provisioning/dashboards/`)
+next to a small [dashboard provider][grafana-provisioning] YAML.
+
+Counts are rolling-window gauges (see above), so panels show the window's
+current value rather than lifetime totals.
+
+[grafana-provisioning]: https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards
+
 ## Prometheus scrape config
 
 ```yaml
