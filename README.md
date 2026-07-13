@@ -99,7 +99,7 @@ go build .
 ## Grafana dashboard
 
 A ready-made dashboard lives in
-[`grafana/birdweather-dashboard.json`](grafana/birdweather-dashboard.json):
+[`examples/grafana-dashboard.json`](examples/grafana-dashboard.json):
 species leaderboard, most recent visitors, PUC status and link history,
 activity over time, and detection-confidence breakdown.
 
